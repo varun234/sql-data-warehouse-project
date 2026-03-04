@@ -41,20 +41,27 @@ Begin
 		cst_create_date
 		)
 		select 
-		cst_id,
-		cst_key,
-		trim(cst_firstname),
-		trim(cst_lastname),
-		case when Upper(trim(cst_marital_status)) = 's' then 'Single'
-			 when Upper(trim(cst_marital_status)) = 'M' then 'Married'
-			 else 'N/a'
-		end cst_marital_status,
-		case when Upper(trim(cst_gndr)) = 'f' then 'Female'
-			 when Upper(trim(cst_gndr)) = 'm' then 'Male'
-			else 'N/A'
-		end cst_gndr,
-		cst_create_date
-		from bronze_crm_cust_info 
+				cst_id,
+				cst_key,
+				trim(cst_firstname),
+				trim(cst_lastname),
+				case when Upper(trim(cst_marital_status)) = 's' then 'Single'
+					 when Upper(trim(cst_marital_status)) = 'M' then 'Married'
+					 else 'N/a'
+				end cst_marital_status,
+				case when Upper(trim(cst_gndr)) = 'f' then 'Female'
+					 when Upper(trim(cst_gndr)) = 'm' then 'Male'
+					else 'N/A'
+				end cst_gndr,
+				cst_create_date
+	FROM (
+		SELECT
+			*,
+			ROW_NUMBER() OVER (PARTITION BY cst_id ORDER BY cst_create_date DESC) AS flag_last
+		FROM bronze_crm_cust_info
+		WHERE cst_id IS NOT NULL
+	) t
+	WHERE flag_last = 1;
 		set @end_time = Getdate() ;
 		print' time taken to load silver_crm_cust_info =' + cast(datediff(second,@start_time,@end_time) as Nvarchar) + '' +'Seconds';
 		Print '---------------------------------';
